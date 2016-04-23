@@ -202,5 +202,11 @@ fn main() {
 
     image = flip_vertical(&image);
     image.save("image.png").unwrap();
+
+    // generate the rays
+
+    // follow the rays, determining the 3 best
+    
+    // calculate the strength of the 3 best rays
      
 }

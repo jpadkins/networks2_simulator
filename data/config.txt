@@ -1,9 +1,9 @@
 frequency: 2.54
-ceiling: 5.0
+ceiling: 2.9
 room_w: 91.0
 room_h: 97.0
 t_gain: 20.0
 r_gain: 20.0
 t_angle: 90.0
-t_pos: (2.2, 2.3, 1.2)
-r_pos: (1.3, 1.0, 1.2)
+t_pos: (39, 19, 1.4)
+r_pos: (5, 35, 1.4)
