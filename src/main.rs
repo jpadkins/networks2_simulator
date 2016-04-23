@@ -75,12 +75,42 @@ impl fmt::Display for Vec3 {
     }
 }
 
-fn retrieve(config: &HashMap<&str, f64>, key: &str) -> f64 { 
-    match config.get(key) {
-        Some(value) => { return *value },
-        None => { panic!("No value in config for <{}>!", key); }
-    } 
+struct Room {
+    walls: Vec<(Vec2, Vec2)>,
+    ceiling: f64,
+    width: f64,
+    height: f64,
+    t_gain: f64,
+    r_gain: f64,
+    t_angle: f64,
+    t_pos: Vec3,
+    r_pos: Vec3,
 }
+
+impl Room {
+    fn new(walls: Vec<(Vec2, Vec2)>, ceiling: f64, width: f64, height: f64, t_gain: f64,
+           r_gain: f64, t_angle: f64, t_pos: Vec3, r_pos: Vec3) -> Room {
+        Room {
+            walls: walls,
+            ceiling: ceiling,
+            width: width,
+            height: height,
+            t_gain: t_gain,
+            r_gain: r_gain,
+            t_angle: t_angle,
+            t_pos: t_pos,
+            r_pos: r_pos,
+        }
+    }
+}
+
+fn get_wall(wall: &(Vec2, Vec2), ceiling: f64) -> (Vec3, Vec3, Vec3, Vec3) {
+    let s1 = Vec3::new(wall.0.x, wall.0.y, ceiling);
+    let s2 = Vec3::new(wall.1.x, wall.1.y, ceiling);
+    let s3 = Vec3::new(wall.0.x, wall.0.y, 0_f64);
+    let s4 = Vec3::new(wall.1.x, wall.1.y, 0_f64);
+    (s1, s2, s3, s4)
+} 
 
 fn main() {
     println!("\n
@@ -108,12 +138,18 @@ fn main() {
     println!("Okay!");
 
     // declare config hashmap and vars
-    let mut config: HashMap<&str, f64> = HashMap::new();
+    let mut frequency = 0_f64;
+    let mut ceiling = 0_f64;
+    let mut room_w = 0_f64;
+    let mut room_h = 0_f64;
+    let mut t_gain = 0_f64;
+    let mut r_gain = 0_f64;
+    let mut t_angle = 0_f64;
     let mut t_pos = Vec3::new(0_f64, 0_f64, 0_f64);
     let mut r_pos = Vec3::new(0_f64, 0_f64, 0_f64);
 
-    // declare room vector
-    let mut room: Vec<(Vec2, Vec2)> = Vec::new(); 
+    // declare walls vector
+    let mut walls: Vec<(Vec2, Vec2)> = Vec::new(); 
 
     // parse config
     println!("\nParsing config file contents:");
@@ -131,20 +167,27 @@ fn main() {
                             let x_f64 = x.parse::<f64>().unwrap();
                             let y_f64 = y.parse::<f64>().unwrap();
                             let z_f64 = z.parse::<f64>().unwrap();
-                            let point = Vec3::new(x_f64, y_f64, z_f64); 
-                            if key == "t_pos" {
-                                t_pos = point;
-                            } else if key == "r_pos" {
-                                r_pos = point;
-                            } else {
-                                panic!("malformed config file!");
+                            let point = Vec3::new(x_f64, y_f64, z_f64);
+                            match key {
+                                "t_pos" => { t_pos = point; },
+                                "r_pos" => { r_pos = point; },
+                                _ => { panic!("malformed config file!"); }
                             }
                         }
                         _ => {}
                     } 
                 } else {
                     let val_f64 = val.parse::<f64>().unwrap(); 
-                    config.insert(key, val_f64);
+                    match key {
+                        "frequency" => { frequency = val_f64; },
+                        "ceiling"   => { ceiling = val_f64; },
+                        "room_w"    => { room_w = val_f64; },
+                        "room_h"    => { room_h = val_f64; },
+                        "t_gain"    => { t_gain = val_f64; },
+                        "r_gain"    => { r_gain = val_f64; },
+                        "t_angle"   => { t_angle = val_f64; },
+                        _ => { panic!("malformed config file!"); }
+                    }
                 } 
             },
             _ => {}
@@ -172,7 +215,7 @@ fn main() {
                         let y2_f64 = y2.parse::<f64>().unwrap();
                         let point1 = Vec2::new(x1_f64, y1_f64);
                         let point2 = Vec2::new(x2_f64, y2_f64); 
-                        room.push((point1, point2));
+                        walls.push((point1, point2));
                     },
                     _ => {}
                 }
@@ -186,17 +229,20 @@ fn main() {
     println!("\nParsed config values:");
     println!("Transmitter position:\t{}", t_pos);
     println!("Receiver Position:\t{}", r_pos);
-    println!("Frequency:\t\t{}", retrieve(&config, "frequency"));
-    println!("Ceiling:\t\t{}", retrieve(&config, "ceiling"));
-    println!("Room Width:\t\t{}", retrieve(&config, "room_w"));
-    println!("Room Height:\t\t{}", retrieve(&config, "room_h"));
-    println!("Transmitter Gain:\t{}", retrieve(&config, "t_gain"));
-    println!("Receiver Gain:\t\t{}", retrieve(&config, "r_gain"));
-    println!("Transmitter Angle:\t{}", retrieve(&config, "t_angle"));
+    println!("Frequency:\t\t{}", frequency);
+    println!("Ceiling:\t\t{}", ceiling);
+    println!("Room Width:\t\t{}", room_w);
+    println!("Room Height:\t\t{}", room_h);
+    println!("Transmitter Gain:\t{}", t_gain);
+    println!("Receiver Gain:\t\t{}", r_gain);
+    println!("Transmitter Angle:\t{}", t_angle);
+
+    // create Room object
+    let mut room = Room::new(walls, ceiling, room_w, room_h, t_gain, r_gain, t_angle, t_pos, r_pos);
 
     // print out parsed room wall definitions
     println!("\nParsed room wall definitions:");
-    for (i, wall) in room.iter().enumerate() {
+    for (i, wall) in room.walls.iter().enumerate() {
         println!("Wall #{}: {} - {}", i, wall.0, wall.1);
     }
 
@@ -205,9 +251,9 @@ fn main() {
     // Stage 2: Contruct Virtual Indoor Space
     ");
     
-    let mut image = RgbImage::new(retrieve(&config, "room_w") as u32, retrieve(&config, "room_h") as u32); 
+    let mut image = RgbImage::new(room.width as u32, room.height as u32); 
     
-    for wall in room.iter() {
+    for wall in room.walls.iter() {
         image.get_pixel_mut(wall.0.x as u32, wall.0.y as u32).data = [255, 255, 255];
         let mut x1 = wall.0.x as u32;
         let mut y1 = wall.0.y as u32;
@@ -226,7 +272,7 @@ fn main() {
 
     // generate the rays
     
-    let mut ray = t_pos;
+    let mut ray = room.t_pos;
     for _i in 1..20 {
         image.get_pixel_mut(ray.x as u32, ray.y as u32).data = [255, 0, 0];                
         ray.change_pos(1.0, 1.0, 1.0);
