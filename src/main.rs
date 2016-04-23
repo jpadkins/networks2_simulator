@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use image::RgbImage;
 use image::imageops::*;
 
+#[derive(PartialEq, PartialOrd, Clone)]
 struct Vec2 {
     x: f64,
     y: f64,
@@ -29,6 +30,7 @@ impl fmt::Display for Vec2 {
     }
 }
 
+#[derive(PartialEq, PartialOrd, Clone)]
 struct Vec3 {
     x: f64,
     y: f64,
@@ -42,6 +44,28 @@ impl Vec3 {
             y: y,
             z: z,
         }
+    }
+    fn change_pos(&mut self, x: f64, y: f64, z: f64) {
+        self.x += x;
+        self.y += y;
+        self.z += z;
+    }
+    fn add(v1: &Vec3, v2: &Vec3) -> Vec3 {
+        Vec3::new(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z)
+    }
+    fn sub(v1: &Vec3, v2: &Vec3) -> Vec3 {
+        Vec3::new(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z)
+    }
+    fn dot(v1: &Vec3, v2: &Vec3) -> f64 {
+        v1.x*v2.x + v1.y*v2.y + v1.z*v2.z
+    }
+    fn cross(v1: &Vec3, v2: &Vec3) -> Vec3 {
+        Vec3::new(v1.y * v2.z - v1.z * v2.y,
+                  v1.z - v2.x - v1.x * v2.z,
+                  v1.x - v2.y - v1.y * v2.x)
+    }
+    fn mul(v: &Vec3, f: f64) -> Vec3 {
+        Vec3::new(v.x*f, v.y*f, v.z*f)
     }
 }
 
@@ -200,10 +224,16 @@ fn main() {
         } 
     }
 
+    // generate the rays
+    
+    let mut ray = t_pos;
+    for _i in 1..20 {
+        image.get_pixel_mut(ray.x as u32, ray.y as u32).data = [255, 0, 0];                
+        ray.change_pos(1.0, 1.0, 1.0);
+    } 
+
     image = flip_vertical(&image);
     image.save("image.png").unwrap();
-
-    // generate the rays
 
     // follow the rays, determining the 3 best
     
