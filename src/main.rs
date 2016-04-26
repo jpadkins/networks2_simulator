@@ -1,80 +1,20 @@
 // crates
 extern crate image;
 
-// inclusions
-use std::fmt;
+// inclusions 
 use std::io::Read;
-use std::fs::File; 
-use std::collections::HashMap;
+use std::fs::File;
+use std::mem;
 use image::RgbImage;
 use image::imageops::*;
 
-#[derive(PartialEq, PartialOrd, Clone)]
-struct Vec2 {
-    x: f64,
-    y: f64,
-}
+mod vec2;
+use vec2::Vec2;
 
-impl Vec2 {
-    fn new(x: f64, y: f64) -> Vec2 {
-        Vec2 {
-            x: x,
-            y: y,
-        }
-    }
-}
+mod vec3;
+use vec3::Vec3;
 
-impl fmt::Display for Vec2 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {})", self.x, self.y)
-    }
-}
-
-#[derive(PartialEq, PartialOrd, Clone)]
-struct Vec3 {
-    x: f64,
-    y: f64,
-    z: f64,
-}
-
-impl Vec3 {
-    fn new(x: f64, y: f64, z: f64) -> Vec3 {
-        Vec3 {
-            x: x,
-            y: y,
-            z: z,
-        }
-    }
-    fn change_pos(&mut self, x: f64, y: f64, z: f64) {
-        self.x += x;
-        self.y += y;
-        self.z += z;
-    }
-    fn add(v1: &Vec3, v2: &Vec3) -> Vec3 {
-        Vec3::new(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z)
-    }
-    fn sub(v1: &Vec3, v2: &Vec3) -> Vec3 {
-        Vec3::new(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z)
-    }
-    fn dot(v1: &Vec3, v2: &Vec3) -> f64 {
-        v1.x*v2.x + v1.y*v2.y + v1.z*v2.z
-    }
-    fn cross(v1: &Vec3, v2: &Vec3) -> Vec3 {
-        Vec3::new(v1.y * v2.z - v1.z * v2.y,
-                  v1.z - v2.x - v1.x * v2.z,
-                  v1.x - v2.y - v1.y * v2.x)
-    }
-    fn mul(v: &Vec3, f: f64) -> Vec3 {
-        Vec3::new(v.x*f, v.y*f, v.z*f)
-    }
-}
-
-impl fmt::Display for Vec3 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {}, {})", self.x, self.y, self.z)
-    }
-}
-
+// structs 
 struct Room {
     walls: Vec<(Vec2, Vec2)>,
     ceiling: f64,
@@ -101,15 +41,14 @@ impl Room {
             t_pos: t_pos,
             r_pos: r_pos,
         }
-    }
-}
-
-fn get_wall(wall: &(Vec2, Vec2), ceiling: f64) -> (Vec3, Vec3, Vec3, Vec3) {
-    let s1 = Vec3::new(wall.0.x, wall.0.y, ceiling);
-    let s2 = Vec3::new(wall.1.x, wall.1.y, ceiling);
-    let s3 = Vec3::new(wall.0.x, wall.0.y, 0_f64);
-    let s4 = Vec3::new(wall.1.x, wall.1.y, 0_f64);
-    (s1, s2, s3, s4)
+    } 
+    fn get_wall(wall: &(Vec2, Vec2), ceiling: f64) -> (Vec3, Vec3, Vec3, Vec3) {
+        let s1 = Vec3::new(wall.0.x, wall.0.y, ceiling);
+        let s2 = Vec3::new(wall.1.x, wall.1.y, ceiling);
+        let s3 = Vec3::new(wall.0.x, wall.0.y, 0_f64);
+        let s4 = Vec3::new(wall.1.x, wall.1.y, 0_f64);
+        (s1, s2, s3, s4)
+    } 
 } 
 
 fn main() {
@@ -272,11 +211,46 @@ fn main() {
 
     // generate the rays
     
-    let mut ray = room.t_pos;
-    for _i in 1..20 {
-        image.get_pixel_mut(ray.x as u32, ray.y as u32).data = [255, 0, 0];                
-        ray.change_pos(1.0, 1.0, 1.0);
-    } 
+    let mut src = room.t_pos;
+    let mut dst = room.r_pos; 
+    
+    let steep = (dst.y - src.y).abs() > (dst.x - src.x).abs();
+    if steep {
+        mem::swap(&mut src.x, &mut src.y);
+        mem::swap(&mut dst.x, &mut dst.y);
+    }
+    if src.x > dst.x {
+        mem::swap(&mut src.x, &mut dst.x);
+        mem::swap(&mut src.y, &mut dst.y);
+    }
+    let dx = dst.x - src.x;
+    let dy = (dst.y - src.y).abs();
+    let mut err = dx / 2.0;
+    let mut ystep = 0;
+    if src.y < dst.y {
+        ystep = 1;
+    } else {
+        ystep = -1;
+    }
+    let mut y = src.y as i32;
+    let maxx = dst.x as i32;
+    let mut x = src.x as i32;
+    while x < maxx {
+        let color = [((255 / maxx)*x) as u8, 0, 0];
+        match steep {
+            true => { image.get_pixel_mut(y as u32, x as u32).data = color; },
+            false => { image.get_pixel_mut(x as u32, y as u32).data = color; },
+        }
+        err -= dy;
+        if err < 0.0 {
+            y += ystep;
+            err += dx;
+        }
+        x += 1;
+    }
+    
+    image.get_pixel_mut(src.x as u32, src.y as u32).data = [0, 255, 0];
+    image.get_pixel_mut(dst.x as u32, dst.y as u32).data = [0, 0, 255];
 
     image = flip_vertical(&image);
     image.save("image.png").unwrap();
