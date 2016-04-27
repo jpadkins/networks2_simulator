@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[allow(dead_code)]
 #[derive(PartialEq, PartialOrd, Clone)]
 pub struct Vec2 {
     pub x: f64,

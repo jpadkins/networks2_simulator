@@ -1,6 +1,7 @@
 use std::fmt;
 
-#[derive(PartialEq, PartialOrd, Clone)]
+#[allow(dead_code)]
+#[derive(PartialEq, PartialOrd, Clone)] 
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -36,6 +37,11 @@ impl Vec3 {
     }
     pub fn mul(v: &Vec3, f: f64) -> Vec3 {
         Vec3::new(v.x*f, v.y*f, v.z*f)
+    }
+    pub fn pos(&mut self, x: f64, y: f64, z: f64) {
+        self.x += x;
+        self.y += y;
+        self.z += z;
     }
 }
 
