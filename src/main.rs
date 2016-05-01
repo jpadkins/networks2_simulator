@@ -127,6 +127,21 @@ fn main() {
         lat += angle_lat; 
     }
 
+    // trace each ray, tracking top three 
+    //let top_rays = Vec::new();
+    for ray in rays.iter() {
+        let mut cutoff = 200.0;
+        let mut distance = 0.0;
+        while distance < cutoff { 
+            // determine if the ray comes close enough to the r
+            // if it did, break and insert into top_rays if appropriate
+            // else, determine the closest plane the ray intersects
+            // then, determine the resulting ray after intersection
+            // finally, sum the distance travelled
+            distance += 40.0;
+        }
+    } 
+
     // define image
     let mut image = RgbImage::new(room_w as u32, room_h as u32);
 
@@ -143,9 +158,9 @@ fn main() {
     // draw transmitter/receiver
     image.get_pixel_mut(t_pos.x as u32, t_pos.y as u32).data = color_t;
     image.get_pixel_mut(r_pos.x as u32, r_pos.y as u32).data = color_r;
-    
-    for ray in rays.iter() { 
-        image.get_pixel_mut(ray.1.x as u32, ray.1.y as u32).data = color_t;
+
+    for ray in rays.iter() {
+        image.get_pixel_mut(ray.1.x as u32, ray.1.y as u32).data = color_r;   
     }
     
     // save image
