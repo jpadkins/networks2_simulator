@@ -38,10 +38,22 @@ impl Vec3 {
     pub fn mul(v: &Vec3, f: f64) -> Vec3 {
         Vec3::new(v.x*f, v.y*f, v.z*f)
     }
+    pub fn len(v: &Vec3) -> f64 {
+        (v.x * v.x + v.y * v.y + v.z * v.z).sqrt()
+    }
+    pub fn norm(v: &Vec3) -> Vec3 {
+        let length = Vec3::len(&v);
+        if length == 0.0 { panic!("norm(): Length of Vec3 is 0!"); }
+        Vec3::new(v.x / length, v.y / length, v.z / length)
+    }
     pub fn pos(&mut self, x: f64, y: f64, z: f64) {
         self.x += x;
         self.y += y;
         self.z += z;
+    }
+    pub fn line_dist(a: &Vec3, b: &Vec3, point: &Vec3) -> f64 {
+        Vec3::len(&Vec3::cross(&Vec3::sub(&point, &a), &Vec3::sub(&point, &b)))
+            / Vec3::len(&Vec3::sub(&b, &a))
     }
 }
 
