@@ -41,11 +41,20 @@ impl Vec3 {
     pub fn len(v: &Vec3) -> f64 {
         (v.x * v.x + v.y * v.y + v.z * v.z).sqrt()
     }
-    pub fn norm(v: &Vec3) -> Vec3 {
+    pub fn dist(v1: &Vec3, v2: &Vec3) -> f64 {
+        ((v1.x-v2.x)*(v1.x-v2.x) + (v1.y-v2.y)*(v1.y-v2.y) + (v1.z-v2.z)*(v1.z-v2.z)).sqrt()
+    }
+    pub fn vec_norm(v: &Vec3) -> Vec3 {
         let length = Vec3::len(&v);
         if length == 0.0 { panic!("norm(): Length of Vec3 is 0!"); }
         Vec3::new(v.x / length, v.y / length, v.z / length)
-    } 
+    }
+    pub fn plane_norm(plane: &(Vec3, Vec3, Vec3, Vec3)) -> Vec3 {
+        let nx = (plane.1.y-plane.0.y)*(plane.2.z*plane.0.z) - (plane.1.z-plane.0.z)*(plane.2.y*plane.0.y);
+        let ny = (plane.1.z-plane.0.z)*(plane.2.x*plane.0.x) - (plane.1.x-plane.0.x)*(plane.2.z*plane.0.z);
+        let nz = (plane.1.x-plane.0.x)*(plane.2.y*plane.0.y) - (plane.1.y-plane.0.y)*(plane.2.x*plane.0.x);
+        Vec3::new(nx, ny, nz)
+    }
     pub fn pos(&mut self, x: f64, y: f64, z: f64) {
         self.x += x;
         self.y += y;

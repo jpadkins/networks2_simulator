@@ -13,6 +13,9 @@ use vec2::Vec2;
 mod vec3;
 use vec3::Vec3;
 
+mod signal;
+use signal::Signal;
+
 // vertices of WALLS in 2D
 const WALLS: [(Vec2, Vec2); 17] =
 [
@@ -47,21 +50,20 @@ const ROOMS: [(Vec2, Vec2, Vec2, Vec2); 3] =
 ];
 
 // global variables
-//const FREQUENCY:    f64 = 2.45;
+const FREQUENCY:    f64 = 2.45;
 const CEILING:      f64 = 2.9;
 const ROOM_W:       f64 = 97.0;
 const ROOM_H:       f64 = 91.0;
-//const R_POW:        f64 = 13.0; // dBm
-//const T_GAIN:       f64 = 2.0;  // dBi
-//const R_GAIN:       f64 = 7.0;  // dBi
+const T_POW:        f64 = 13.0; // dBm
+const T_GAIN:       f64 = 2.0;  // dBi
+const R_GAIN:       f64 = 7.0;  // dBi
 const N:            u32 = 50;
-const T_POS: Vec3 = Vec3 { x: 39.0, y: 19.0, z: 0.45 };
-const R_POS: Vec3 = Vec3 { x:  5.0, y: 25.0, z: 0.45 };
+const T_POS: Vec3 = Vec3 { x: 39.0, y: 19.0, z: 0.45 }; 
 const COLOR_WALL:   [u8; 3] = [255, 255, 255];
 const COLOR_T:      [u8; 3] = [255, 0, 0];
 const COLOR_R:      [u8; 3] = [0, 0, 255];
 
-fn intersect(v1: &Vec3, v2: &Vec3, plane: &(Vec3, Vec3, Vec3, Vec3)) -> Option<Vec3> {
+fn ray_plane_isect(v1: &Vec3, v2: &Vec3, plane: &(Vec3, Vec3, Vec3, Vec3)) -> Option<Vec3> {
     let dS21 = Vec3::sub(&plane.1, &plane.0);
     let dS31 = Vec3::sub(&plane.2, &plane.0);
     let n = Vec3::cross(&dS21, &dS31);
@@ -145,32 +147,20 @@ fn main() {
         lat += angle_lat;
     }
 
-    // trace each ray, tracking top three
-    //let top_rays = Vec::new();
-    let mut lowest = 10000.0;
-    for ray in rays.iter() {
-        let dist = Vec3::line_dist(&ray.0, &ray.1, &R_POS);
-        if dist < lowest {
-            lowest = dist;
-        }
-        //let cutoff = 200.0;
-        //let mut distance = 0.0;
-        //while distance < cutoff {
-            // determine if the ray comes close enough to the r
-            // first extrapolate ray out to first collision
-            //if Vec3::line_dist(&ray.0, &ray.1, &R_POS) < 5.0 {
-            //}
-            // if it did, break and insert into top_rays if appropriate
-            // else, determine the closest plane the ray intersects
-            // then, determine the resulting ray after intersection
-            // finally, sum the distance travelled
-            //distance += 40.0;
-        //}
-    }
-    println!("lowest: {}", lowest);
-
     // define image
     let mut image = RgbImage::new(ROOM_W as u32, ROOM_H as u32);
+   
+    let cutoff = 200.0; 
+
+    for x in 0..ROOM_W as u32 {
+        for y in 0..ROOM_H as u32 {
+            let r_pos = Vec3::new(x as f64, y as f64, 0.45);
+            for ray in rays.iter() { 
+                let mut distance = 0.0;
+                let mut temp_ray = ray.clone();
+            }
+        }
+    }
 
     // draw WALLS
     for wall in WALLS.iter() {
@@ -180,20 +170,6 @@ fn main() {
         }
         image.get_pixel_mut(wall.0.x as u32, wall.0.y as u32).data = COLOR_WALL;
         image.get_pixel_mut(wall.1.x as u32, wall.1.y as u32).data = COLOR_WALL;
-    }
-
-    // draw transmitter/receiver
-    image.get_pixel_mut(T_POS.x as u32, T_POS.y as u32).data = COLOR_T;
-    image.get_pixel_mut(R_POS.x as u32, R_POS.y as u32).data = COLOR_R;
-
-    for ray in rays.iter() {
-        match intersect(&ray.0, &ray.1, &planes[0]) {
-            Some(point) => { println!("{}", point); },
-            _ => {}
-        } 
-        if ray.1.x > 0.0 && ray.1.x < ROOM_W && ray.1.y > 0.0 && ray.1.y < ROOM_H {
-            image.get_pixel_mut(ray.1.x as u32, ray.1.y as u32).data = COLOR_R;
-        }
     }
 
     // save image
