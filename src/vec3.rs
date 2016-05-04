@@ -1,6 +1,5 @@
 use std::fmt;
 
-#[allow(dead_code)]
 #[derive(PartialEq, PartialOrd, Clone)] 
 pub struct Vec3 {
     pub x: f64,
@@ -8,6 +7,7 @@ pub struct Vec3 {
     pub z: f64,
 }
 
+#[allow(dead_code)]
 impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Vec3 {
         Vec3 {
@@ -45,7 +45,7 @@ impl Vec3 {
         let length = Vec3::len(&v);
         if length == 0.0 { panic!("norm(): Length of Vec3 is 0!"); }
         Vec3::new(v.x / length, v.y / length, v.z / length)
-    }
+    } 
     pub fn pos(&mut self, x: f64, y: f64, z: f64) {
         self.x += x;
         self.y += y;

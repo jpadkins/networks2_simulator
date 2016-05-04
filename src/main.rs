@@ -61,6 +61,27 @@ const COLOR_WALL:   [u8; 3] = [255, 255, 255];
 const COLOR_T:      [u8; 3] = [255, 0, 0];
 const COLOR_R:      [u8; 3] = [0, 0, 255];
 
+fn intersect(v1: &Vec3, v2: &Vec3, plane: &(Vec3, Vec3, Vec3, Vec3)) -> Option<Vec3> {
+    let dS21 = Vec3::sub(&plane.1, &plane.0);
+    let dS31 = Vec3::sub(&plane.2, &plane.0);
+    let n = Vec3::cross(&dS21, &dS31);
+    let dR = Vec3::sub(&v1, &v2);
+    let ndotdR = Vec3::dot(&n, &dR);
+    if ndotdR.abs() < 1e-6 {
+        return None;
+    }
+    let t = Vec3::dot(&Vec3::mul(&n, -1.0), &Vec3::sub(&v1, &plane.0)) / ndotdR;
+    let M = Vec3::add(&v1, &Vec3::mul(&dR, t));
+    let dMS1 = Vec3::sub(&M, &plane.0);
+    let u = Vec3::dot(&dMS1, &dS21);
+    let v = Vec3::dot(&dMS1, &dS31);
+    if u >= 0.0 && u <= Vec3::dot(&dS21, &dS21) 
+    && v >= 0.0 && v <= Vec3::dot(&dS31, &dS31) {
+        return Some(M);
+    } else {
+        None
+    }
+}
 
 fn main() {
     /*
@@ -136,6 +157,7 @@ fn main() {
         //let mut distance = 0.0;
         //while distance < cutoff {
             // determine if the ray comes close enough to the r
+            // first extrapolate ray out to first collision
             //if Vec3::line_dist(&ray.0, &ray.1, &R_POS) < 5.0 {
             //}
             // if it did, break and insert into top_rays if appropriate
@@ -165,6 +187,10 @@ fn main() {
     image.get_pixel_mut(R_POS.x as u32, R_POS.y as u32).data = COLOR_R;
 
     for ray in rays.iter() {
+        match intersect(&ray.0, &ray.1, &planes[0]) {
+            Some(point) => { println!("{}", point); },
+            _ => {}
+        } 
         if ray.1.x > 0.0 && ray.1.x < ROOM_W && ray.1.y > 0.0 && ray.1.y < ROOM_H {
             image.get_pixel_mut(ray.1.x as u32, ray.1.y as u32).data = COLOR_R;
         }
