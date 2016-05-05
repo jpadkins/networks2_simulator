@@ -58,7 +58,7 @@ const ROOM_H:       f64 = 91.0;
 const T_POW:        f64 = 13.0; // dBm
 const T_GAIN:       f64 = 2.0;  // dBi
 const R_GAIN:       f64 = 7.0;  // dBi
-const N:            u32 = 20;
+const N:            u32 = 30;
 const T_POS: Vec3 = Vec3 { x: 39.0, y: 19.0, z: 0.45 }; 
 const COLOR_WALL:   [u8; 3] = [255, 255, 255];
 const COLOR_T:      [u8; 3] = [255, 0, 0];
@@ -219,10 +219,12 @@ fn main() {
             for best_ray in best_rays.iter() {
                 val += best_ray.1;
             }
-            let mut c = 255 - (val as u8);
-            if c > 255 { c = 255; }
-            if c < 0 { c = 0; }
-            image.get_pixel_mut(x, y).data = [c, 0, 0];
+            let mut r = 255 - (val as u8);
+            let mut g = 0;
+            let mut b = 0;
+            if r > 255 { g = r - 255; r = 255; }
+            if r < 0 { b = 0 - r; r = 0; }
+            image.get_pixel_mut(x, y).data = [r, g, b];
         }
     }
 
