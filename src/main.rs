@@ -195,12 +195,12 @@ fn main() {
                     let line_dist = Vec3::line_dist(&temp_ray.0, &temp_ray.1, &r_pos);
                     if  line_dist < threshold {
                         if best_rays.len() < 3 { 
-                            best_rays.push((temp_ray, line_dist));
+                            best_rays.push((temp_ray, distance.clone(), line_dist));
                             break;
                         } else {
-                            best_rays.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Equal));
+                            best_rays.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap_or(Ordering::Equal));
                             best_rays.pop();
-                            best_rays.push((temp_ray, line_dist));
+                            best_rays.push((temp_ray, distance.clone(), line_dist));
                             break; 
                         }
                     } 
@@ -214,7 +214,12 @@ fn main() {
                     iterations += 1;
                 }
             }
-            println!("{}", best_rays.len());
+            println!("calculating receiver {} of {}. . . .", (x*(ROOM_H as u32) + y), (ROOM_W as u32) * (ROOM_H as u32));
+            let mut val = 0.0;
+            for best_ray in best_rays.iter() {
+                val += best_ray.1;
+            }
+            image.get_pixel_mut(x, y).data = [255 - (val as u8)*2, 0, 0];
         }
     }
 
