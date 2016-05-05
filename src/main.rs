@@ -3,6 +3,7 @@ extern crate image;
 
 // uses
 use std::f64;
+use std::cmp::Ordering;
 use image::RgbImage;
 use image::imageops::*;
 
@@ -57,7 +58,7 @@ const ROOM_H:       f64 = 91.0;
 const T_POW:        f64 = 13.0; // dBm
 const T_GAIN:       f64 = 2.0;  // dBi
 const R_GAIN:       f64 = 7.0;  // dBi
-const N:            u32 = 50;
+const N:            u32 = 100;
 const T_POS: Vec3 = Vec3 { x: 39.0, y: 19.0, z: 0.45 }; 
 const COLOR_WALL:   [u8; 3] = [255, 255, 255];
 const COLOR_T:      [u8; 3] = [255, 0, 0];
@@ -83,6 +84,15 @@ fn ray_plane_isect(v1: &Vec3, v2: &Vec3, plane: &(Vec3, Vec3, Vec3, Vec3)) -> Op
     } else {
         None
     }
+}
+
+fn ray_plane_angle(v: &Vec3, plane: &(Vec3, Vec3, Vec3, Vec3)) -> f64 {
+    let normal = Vec3::plane_norm(&plane);
+    let mut angle = f64::atan2(v.x, v.y) - f64::atan2(normal.x, normal.y);
+    if angle < 0.0 {
+        angle += 2.0 * f64::consts::PI;
+    }
+    angle
 }
 
 fn main() {
@@ -150,15 +160,61 @@ fn main() {
     // define image
     let mut image = RgbImage::new(ROOM_W as u32, ROOM_H as u32);
    
-    let cutoff = 200.0; 
+    let cutoff = 200.0;
+    let threshold = 1.0;
 
     for x in 0..ROOM_W as u32 {
-        for y in 0..ROOM_H as u32 {
+        for y in 0..ROOM_H as u32 { 
             let r_pos = Vec3::new(x as f64, y as f64, 0.45);
+            let mut best_rays = Vec::new();
             for ray in rays.iter() { 
                 let mut distance = 0.0;
+                let mut iterations = 0;
                 let mut temp_ray = ray.clone();
+                // find the closest point of intersection with a plane
+                let mut closest_isect: (Vec3, f64, usize) = (Vec3::new(0.0, 0.0, 0.0), cutoff, 0);
+                while distance < cutoff && iterations < 20 {
+                    for (i, plane) in planes.iter().enumerate() {
+                        match ray_plane_isect(&temp_ray.0, &temp_ray.1, &plane) {
+                            Some(point) => {
+                                let dist = Vec3::dist(&temp_ray.0, &point);
+                                if dist < closest_isect.1 {
+                                    closest_isect.0 = point.clone();
+                                    closest_isect.2 = i;
+                                }
+                            },
+                            _ => {}
+                        }
+                    }
+                    if closest_isect.0 == Vec3::new(0.0, 0.0, 0.0) {
+                        break;
+                    } else {
+                        temp_ray.1 = closest_isect.0.clone();
+                    }
+                    // check if line is close enough
+                    let line_dist = Vec3::line_dist(&temp_ray.0, &temp_ray.1, &r_pos);
+                    if  line_dist < threshold {
+                        if best_rays.len() < 3 { 
+                            best_rays.push((temp_ray, line_dist));
+                            break;
+                        } else {
+                            best_rays.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Equal));
+                            best_rays.pop();
+                            best_rays.push((temp_ray, line_dist));
+                            break; 
+                        }
+                    } 
+                    // else, calculate resulting ray and increment dist
+                    distance += Vec3::dist(&temp_ray.0, &closest_isect.0); 
+                    let norm = Vec3::vec_norm(&Vec3::plane_norm(&planes[closest_isect.2]));
+                    let dot = Vec3::dot(&temp_ray.0, &norm);
+                    let refl = Vec3::mul(&Vec3::mul(&norm, dot), -2.0);
+                    temp_ray.0 = closest_isect.0.clone();
+                    temp_ray.1 = Vec3::sub(&temp_ray.0, &refl);
+                    iterations += 1;
+                }
             }
+            println!("{}", best_rays.len());
         }
     }
 

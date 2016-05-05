@@ -44,6 +44,9 @@ impl Vec3 {
     pub fn dist(v1: &Vec3, v2: &Vec3) -> f64 {
         ((v1.x-v2.x)*(v1.x-v2.x) + (v1.y-v2.y)*(v1.y-v2.y) + (v1.z-v2.z)*(v1.z-v2.z)).sqrt()
     }
+    pub fn angle(a: &Vec3, b: &Vec3) -> f64 {
+        Vec3::dot(&a, &b) / (Vec3::len(&a) * Vec3::len(&b))
+    }
     pub fn vec_norm(v: &Vec3) -> Vec3 {
         let length = Vec3::len(&v);
         if length == 0.0 { panic!("norm(): Length of Vec3 is 0!"); }
