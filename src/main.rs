@@ -58,7 +58,7 @@ const ROOM_H:       f64 = 91.0;
 const T_POW:        f64 = 13.0; // dBm
 const T_GAIN:       f64 = 2.0;  // dBi
 const R_GAIN:       f64 = 7.0;  // dBi
-const N:            u32 = 100;
+const N:            u32 = 20;
 const T_POS: Vec3 = Vec3 { x: 39.0, y: 19.0, z: 0.45 }; 
 const COLOR_WALL:   [u8; 3] = [255, 255, 255];
 const COLOR_T:      [u8; 3] = [255, 0, 0];
@@ -172,7 +172,7 @@ fn main() {
                 let mut iterations = 0;
                 let mut temp_ray = ray.clone();
                 // find the closest point of intersection with a plane
-                let mut closest_isect: (Vec3, f64, usize) = (Vec3::new(0.0, 0.0, 0.0), cutoff, 0);
+                let mut closest_isect: (Vec3, f64, usize) = (Vec3::new(0.0, 0.0, 0.0), cutoff, 0); 
                 while distance < cutoff && iterations < 20 {
                     for (i, plane) in planes.iter().enumerate() {
                         match ray_plane_isect(&temp_ray.0, &temp_ray.1, &plane) {
@@ -185,7 +185,7 @@ fn main() {
                             },
                             _ => {}
                         }
-                    }
+                    } 
                     if closest_isect.0 == Vec3::new(0.0, 0.0, 0.0) {
                         break;
                     } else {
@@ -206,12 +206,12 @@ fn main() {
                     } 
                     // else, calculate resulting ray and increment dist
                     distance += Vec3::dist(&temp_ray.0, &closest_isect.0); 
-                    let norm = Vec3::vec_norm(&Vec3::plane_norm(&planes[closest_isect.2]));
+                    let norm = Vec3::vec_norm(&Vec3::plane_norm(&planes[closest_isect.2])); 
                     let dot = Vec3::dot(&temp_ray.0, &norm);
-                    let refl = Vec3::mul(&Vec3::mul(&norm, dot), -2.0);
+                    let refl = Vec3::mul(&Vec3::mul(&norm, dot), -2.0); 
                     temp_ray.0 = closest_isect.0.clone();
                     temp_ray.1 = Vec3::sub(&temp_ray.0, &refl);
-                    iterations += 1;
+                    iterations += 1; 
                 }
             }
             println!("calculating receiver {} of {}. . . .", (x*(ROOM_H as u32) + y), (ROOM_W as u32) * (ROOM_H as u32));
@@ -219,7 +219,10 @@ fn main() {
             for best_ray in best_rays.iter() {
                 val += best_ray.1;
             }
-            image.get_pixel_mut(x, y).data = [255 - (val as u8)*2, 0, 0];
+            let mut c = 255 - (val as u8);
+            if c > 255 { c = 255; }
+            if c < 0 { c = 0; }
+            image.get_pixel_mut(x, y).data = [c, 0, 0];
         }
     }
 
